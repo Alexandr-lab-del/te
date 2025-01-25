@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "te"
+version = "0.1.0"
+description = ""
+authors = ["Alexandr-lab-del <gordon675843@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
