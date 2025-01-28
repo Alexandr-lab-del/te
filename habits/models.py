@@ -10,7 +10,7 @@ class Habit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
-    time = models.TimeField()
+    time = models.TimeField(null=True, blank=True)
     action = models.CharField(max_length=255)
     is_enjoyable = models.BooleanField(default=False)
     related_habit = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL)
@@ -19,7 +19,6 @@ class Habit(models.Model):
     duration = models.PositiveIntegerField(default=120)
     is_public = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True, null=True)
-
     created_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
@@ -27,13 +26,6 @@ class Habit(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                check=(
-                        (models.Q(reward__isnull=False) & models.Q(related_habit__isnull=True)) |
-                        (models.Q(reward__isnull=True) & models.Q(related_habit__isnull=False))
-                ),
-                name='reward_or_related_habit'
-            ),
             models.CheckConstraint(
                 check=models.Q(duration__lte=120),
                 name='duration_max_120_seconds'
