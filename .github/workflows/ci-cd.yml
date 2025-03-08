@@ -56,7 +56,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
-        run: python manage.py test
+        run: |
+          python manage.py migrate
+          python manage.py test
 
   deploy:
     runs-on: ubuntu-latest
