@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from .models import Habit
 from .serializers import HabitSerializer
 from .telegram_bot import send_reminder
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import PermissionDenied, NotFound
 
 
 class HabitPagination(PageNumberPagination):
@@ -21,8 +21,8 @@ class HabitPagination(PageNumberPagination):
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
-            return obj.is_public
-        return obj.user == request.user
+            return obj.is_public  # Read access only if the habit is public
+        return obj.user == request.user  # Write access only if user is the owner
 
 
 class HabitViewSet(viewsets.ModelViewSet):
@@ -41,12 +41,12 @@ class HabitViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         habit = self.get_object()
         if not habit.is_public and habit.user != request.user:
-            raise NotFound("Habit not found.")
+            raise NotFound("Habit not found.")  # Возвращаем 404 для постороннего пользователя
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         if serializer.instance.user != self.request.user:
-            raise NotFound("Habit not found.")
+            raise NotFound("Habit not found.")  # Возвращаем 404, если объект принадлежит другому пользователю
         serializer.save()
 
     def perform_create(self, serializer):
@@ -62,7 +62,7 @@ class HabitViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         if instance.user != self.request.user:
-            raise NotFound("Habit not found.")
+            raise NotFound("Habit not found.")  # Возвращаем 404, если объект принадлежит другому пользователю
         super().perform_destroy(instance)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
@@ -77,12 +77,14 @@ class HabitViewSet(viewsets.ModelViewSet):
 
 
 class RegisterSerializer(ModelSerializer):
+    """Serializer used for user registration."""
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
+        """Create the user with hashed password."""
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -92,6 +94,7 @@ class RegisterSerializer(ModelSerializer):
 
 
 class RegisterView(generics.CreateAPIView):
+    """View used for user registration."""
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer

@@ -1,0 +1,139 @@
+from rest_framework.test import APITestCase
+from habits.models import Habit, Profile
+from django.test import TestCase
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+
+
+class HabitModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+
+    def test_habit_constraints(self):
+        habit = Habit.objects.create(
+            user=self.user,
+            name="Evening Read",
+            location="Office",
+            time="20:00",
+            action="Read a book",
+            periodicity=1,
+            reward="Watch TV",
+            duration=100
+        )
+        self.assertTrue(habit.reward)
+        self.assertIsNone(habit.related_habit)
+
+    def test_profile_creation(self):
+        profile = self.user.profile
+        self.assertEqual(profile.user, self.user)
+        self.assertIsNone(profile.telegram_chat_id)
+
+    # Новый тест для проверки связанности привычек
+    def test_related_habit(self):
+        first_habit = Habit.objects.create(
+            user=self.user,
+            name="Morning Walk",
+            location="Park",
+            time="07:00",
+            action="Walk",
+            periodicity=1,
+            duration=30
+        )
+        second_habit = Habit.objects.create(
+            user=self.user,
+            name="Evening Meditation",
+            location="Home",
+            time="19:00",
+            action="Meditate",
+            periodicity=1,
+            duration=20,
+            related_habit=first_habit
+        )
+        self.assertEqual(second_habit.related_habit, first_habit)
+
+
+class HabitConstraintTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+
+    def test_duration_exceeding_limit(self):
+        with self.assertRaises(Exception):
+            Habit.objects.create(
+                user=self.user,
+                name="Too Long Habit", action="Long Activity", duration=150
+            )
+
+    # Новый тест на граничные значения продолжительности привычки
+    def test_max_duration(self):
+        habit = Habit.objects.create(
+            user=self.user,
+            name="Morning Run",
+            location="Park",
+            time="08:00",  # Убедитесь, что это поле присутствует
+            action="Run",
+            periodicity=2,
+            reward="Healthy Breakfast",
+            duration=30
+        )
+        self.assertEqual(habit.duration, 30)
+
+
+class HabitAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+
+class HabitSerializerTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.habit = Habit.objects.create(
+            user=self.user,
+            name="Reading",
+            location="Library",
+            time="19:00",
+            action="Read Books",
+            periodicity=2,
+            is_enjoyable=True,
+            duration=60
+        )
+
+    def test_habit_serialization(self):
+        from habits.serializers import HabitSerializer
+        serializer = HabitSerializer(self.habit)
+        self.assertEqual(serializer.data['name'], "Reading")
+        self.assertEqual(serializer.data['location'], "Library")
+
+
+class TelegramBotTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='telegramuser', password='testpass')
+        self.user.profile.telegram_chat_id = "123456789"
+        self.user.profile.save()
+
+    def test_profile_telegram_chat_id(self):
+        profile = self.user.profile
+        self.assertEqual(profile.telegram_chat_id, "123456789")
+
+
+# Новый тест для проверки связи с Celery
+class CeleryTaskTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='celeryuser', password='testpass')
+        self.habit = Habit.objects.create(
+            user=self.user,
+            name="Habit for Celery",
+            location="Home",
+            time="12:00",
+            action="Do something",
+            periodicity=1,
+            duration=30
+        )
+
+    def test_periodic_task_created(self):
+        from django_celery_beat.models import PeriodicTask
+        task_name = f'Habit Reminder {self.habit.id}'
+        task = PeriodicTask.objects.filter(name=task_name).first()
+        self.assertIsNotNone(task)
+        self.assertEqual(task.task, 'habits.tasks.send_habit_reminder')
