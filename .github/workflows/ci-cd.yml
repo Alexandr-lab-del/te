@@ -49,6 +49,14 @@ jobs:
           echo "POSTGRES_HOST=localhost" >> $GITHUB_ENV
           echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
 
+      - name: Drop Test Database
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        run: |
+          psql -U $POSTGRES_USER -h $POSTGRES_HOST -c "DROP DATABASE IF EXISTS test_db;"
+
       - name: Run tests
         env:
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
@@ -57,8 +65,8 @@ jobs:
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
         run: |
-          python manage.py migrate
-          python manage.py test
+          python manage.py migrate --noinput
+          python manage.py test --keepdb --noinput
 
   deploy:
     runs-on: ubuntu-latest
