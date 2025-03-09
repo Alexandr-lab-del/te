@@ -49,26 +49,33 @@ jobs:
           echo "POSTGRES_HOST=localhost" >> $GITHUB_ENV
           echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
 
+      - name: Set up .pgpass for PostgreSQL
+        run: |
+          echo "localhost:5432:test_db:${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}" > ~/.pgpass
+          chmod 600 ~/.pgpass
+
       - name: Drop Test Database
         env:
           PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
         run: |
-          psql -U $POSTGRES_USER -h $POSTGRES_HOST -d postgres -c "DROP DATABASE IF EXISTS test_db;"
+          psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -d postgres -c "DROP DATABASE IF EXISTS test_db;"
 
       - name: Wait for PostgreSQL to be ready
+        env:
+          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: |
-          for i in {1..10}; do
-            if psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -c '\q'; then
-              echo "PostgreSQL is ready!"
-              exit 0
-            fi
-            echo "Waiting for PostgreSQL..."
-            sleep 5
-          done
-          echo "PostgreSQL did not become ready in time."
-          exit 1
+            for i in {1..10}; do
+              if PGPASSWORD=$PGPASSWORD psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -d postgres -c '\q'; then
+                echo "PostgreSQL is ready!"
+                exit 0
+              fi
+              echo "Waiting for PostgreSQL..."
+              sleep 5
+            done
+            echo "PostgreSQL did not become ready in time."
+            exit 1
 
       - name: Run tests
         env:
