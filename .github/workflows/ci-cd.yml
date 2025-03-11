@@ -60,7 +60,8 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
         run: |
-          psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -d postgres -c "DROP DATABASE IF EXISTS test_db;"
+          psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -d postgres -c "DROP DATABASE IF EXISTS test_db;" && 
+          psql -U ${{ env.POSTGRES_USER }} -h ${{ env.POSTGRES_HOST }} -d postgres -c "CREATE DATABASE test_db;"
 
       - name: Wait for PostgreSQL to be ready
         env:
