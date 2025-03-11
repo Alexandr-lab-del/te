@@ -10,6 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class HabitSerializer(serializers.ModelSerializer):
+
     user = serializers.ReadOnlyField(source='user.username')
 
     class Meta:
@@ -22,19 +23,31 @@ class HabitSerializer(serializers.ModelSerializer):
         is_enjoyable = data.get('is_enjoyable')
 
         if reward and related_habit:
-            raise serializers.ValidationError("Нельзя одновременно указывать reward и related_habit.")
+            raise serializers.ValidationError(
+                "Вы не можете одновременно указать и 'reward', и 'related_habit'. Выберите одно из них."
+            )
 
-        if related_habit and not related_habit.is_enjoyable:
-            raise serializers.ValidationError("related_habit должна быть (is_enjoyable=True).")
+        if related_habit:
+            if not related_habit.is_enjoyable:
+                raise serializers.ValidationError(
+                    "Указанная привычка в 'related_habit' должна быть приятной (is_enjoyable=True)."
+                )
 
-        if is_enjoyable and (reward or related_habit):
-            raise serializers.ValidationError("is_enjoyable не может иметь reward или related_habit.")
+        if is_enjoyable:
+            if reward or related_habit:
+                raise serializers.ValidationError(
+                    "Параметр 'is_enjoyable' не может быть установлен одновременно с 'reward' или 'related_habit'."
+                )
 
-        if data.get('duration') > 120:
-            raise serializers.ValidationError("Время на выполнение привычки нужно уменьшить.")
+        if data.get('duration') and data['duration'] > 120:
+            raise serializers.ValidationError(
+                "Время выполнения привычки ('duration') не должно превышать 120 минут."
+            )
 
         periodicity = data.get('periodicity')
-        if periodicity < 1 or periodicity > 7:
-            raise serializers.ValidationError("Периодичность должна быть от 1 до 7 дней.")
+        if periodicity and (periodicity < 1 or periodicity > 7):
+            raise serializers.ValidationError(
+                "Поле 'periodicity' должно быть в диапазоне от 1 до 7 дней."
+            )
 
         return data
