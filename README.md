@@ -31,29 +31,49 @@
 ---
 
 ## Установка и настройка
-```bash   
-- **Установите виртуальное окружение и зависимости**:
-
-python -m venv venv
-venv\Scripts\activate 
-pip install -r requirements.txt
- 
-- **Настройте файл .env:**
-
-SECRET_KEY=
-TELEGRAM_BOT_TOKEN=
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-DB_HOST=
-DB_PORT=
-
-- **Примените миграции базы данных:**
-
-   python manage.py makemigrations
-   python manage.py migrate
-
-- **Запустите сервер:**
-
-   python manage.py runserver
-
+Что делать? (пример для windows powershell):
+* Нажимаем win + R
+* Пишем Powershell
+* В открывшемся окне вводим следующие комманды:
+```
+   sudo apt-get update && sudo apt-get upgrade
+   sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
+     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+     sudo apt update
+     sudo apt install docker-ce -y
+   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+     sudo chmod +x /usr/local/bin/docker-compose
+     sudo apt install nginx
+     sudo nano /etc/nginx/sites-available/te
+     docker-compose --version
+```
+* Подключаемся к серверу и клонируем репозиторий:
+```
+ssh test@158.160.157.141
+git clone git@github.com:Alexandr-lab-del/te.git
+cd te
+```
+* Создаем файл .env:
+```
+nano .env
+Внутри пишем:
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+POSTGRES_PORT=
+POSTGRES_HOST=
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_BACKEND=redis://redis:6379/0
+EMAIL_HOST_USER=
+REDIS_URL=redis://redis:6379/0
+DJANGO_SECRET_KEY=
+DJANGO_DEBUG=
+DJANGO_ALLOWED_HOSTS=
+TEST_DATABASE_NAME=test_db
+```
+* Запускаем контейнеры:
+```
+   docker-compose up --build -d
+   docker ps 
+```
