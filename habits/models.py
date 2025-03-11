@@ -4,7 +4,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import json
-from rest_framework.exceptions import NotFound
 
 
 class Habit(models.Model):

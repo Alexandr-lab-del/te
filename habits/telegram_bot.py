@@ -20,7 +20,6 @@ async def send_reminder(chat_id, message):
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.message.chat.id
     username = update.message.chat.username
 
     user, created = User.objects.get_or_create(username=username, defaults={"password": "telegram_default_password"})

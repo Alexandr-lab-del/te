@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from .models import Habit
 from .serializers import HabitSerializer
 from .telegram_bot import send_reminder
-from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.exceptions import NotFound
 
 
 class HabitPagination(PageNumberPagination):
