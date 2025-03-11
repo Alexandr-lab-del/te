@@ -106,7 +106,7 @@ jobs:
         run: |
           ssh -v -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd te
-            git pull origin main
+            git pull origin feature/work_1
             docker-compose down
             docker-compose up -d --build
           EOF
